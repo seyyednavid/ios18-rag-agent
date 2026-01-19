@@ -37,9 +37,21 @@ The agent answers questions about **iOS 18 features** strictly based on official
 
 ## 📂 Project Structure
 
-workflow/ → n8n workflow export
-data/ → Source PDF used for vectorisation
-images/ → Architecture and UI screenshots
+ios18-rag-agent/
+├── workflow/
+│ └── RAG-Agent.json # n8n workflow export
+│
+├── data/
+│ └── iOS_18_All_New_Features_Sept_2024.pdf
+│ # Source document used for vectorisation
+│
+├── images/
+│ ├── architecture.jpg # End-to-end RAG pipeline diagram
+│ ├── ingestion-flow.jpg # Document ingestion flow
+│ ├── query-flow.jpg # Query & retrieval flow
+│ └── chat-ui.jpg # Hosted chat interface screenshot
+│
+└── README.md
 
 
 ---
