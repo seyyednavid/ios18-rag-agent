@@ -1,0 +1,442 @@
+{
+  "name": "RAG Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1O2fYv0zSAOvTJTI6rQx8DEUcX1lmownM",
+          "mode": "list",
+          "cachedResultName": "RAG-N8N",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1O2fYv0zSAOvTJTI6rQx8DEUcX1lmownM"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1888,
+        -400
+      ],
+      "id": "0b11ac2b-e305-406d-8480-24512067ff30",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "4isLyzd9CgZryRJM",
+          "name": "Google OAuth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1664,
+        -400
+      ],
+      "id": "e2532f21-8259-4237-bbe0-31d30ee1483f",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "4isLyzd9CgZryRJM",
+          "name": "Google OAuth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "n8n-rag-agent",
+          "mode": "list",
+          "cachedResultName": "n8n-rag-agent"
+        },
+        "options": {
+          "pineconeNamespace": "ragagent"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        -1456,
+        -400
+      ],
+      "id": "81a21c8f-3e1e-4b60-8c9e-7001b1102c1d",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "IuRsJowzIN9hwqvx",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "loader": "pdfLoader",
+        "textSplittingMode": "custom",
+        "options": {
+          "splitPages": false,
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "Apple",
+                "value": "={{ $json.name }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        -1296,
+        -224
+      ],
+      "id": "43e93816-1e8a-4f1e-ac49-b5d216a1df28",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "chunkSize": 900,
+        "chunkOverlap": 100,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        -1184,
+        -96
+      ],
+      "id": "5c4adbd8-1356-4b01-b760-63a9a7cc163b",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Hi! 👋 I can help you explore what’s new in iOS 18.\nAsk me about features, settings, or changes introduced in the latest update.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -912,
+        -416
+      ],
+      "id": "334d1ec4-37f1-4074-b27a-1c779a40d9cb",
+      "name": "When chat message received",
+      "webhookId": "2ff2b531-2054-456a-a86d-fc67afdafd15"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=#Role\n\nYou are an AI assistant trained to answer questions specifically using the iOS 18 feature documents stored in the connected vector database.\n\n#Objective\n\nYour role is to help users clearly understand the new features, settings, and changes introduced in iOS 18 by retrieving and referencing only the information available in the documents stored in the vector database.\n\nIf a user asks a question that is not covered in the uploaded content, or if the available data does not clearly answer the question, inform the user that the information is not currently available.\n\n#Rules\n\n- Be clear and direct; avoid over-explaining. (Use 2–5 sentences.)\n\n- Use bullet points or short paragraphs when listing multiple features.\n\n- Never guess or make assumptions; rely strictly on the content stored in the vector database.\n\n#Main Objective\n\nDeliver helpful, accurate, and easy-to-understand answers about iOS 18 using only the documents available in the vector store—no speculation, no additional assumptions, and no external sources."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -688,
+        -416
+      ],
+      "id": "c040885b-8e28-44db-9cec-f68051b5e34b",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -800,
+        -192
+      ],
+      "id": "329381b8-9873-46bf-9632-f90a10cf9c58",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "aVySjOJSUuOwC1Go",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -624,
+        -192
+      ],
+      "id": "21a298ab-be52-436b-b2e7-48ee8c03289d",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "=Useful for when you need to answer questions about iOS 18. It finds and returns the most relevant information from the documents in the vector database — such as feature updates, settings, or changes in the new iOS version. Whenever you need information about iOS 18, you should ALWAYS use this.",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "n8n-rag-agent",
+          "mode": "list",
+          "cachedResultName": "n8n-rag-agent"
+        },
+        "options": {
+          "pineconeNamespace": "ragagent"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        -416,
+        -208
+      ],
+      "id": "a45e7705-898b-4b51-94cd-43f2e851ba38",
+      "name": "Retrieve documents",
+      "credentials": {
+        "pineconeApi": {
+          "id": "IuRsJowzIN9hwqvx",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1456,
+        -224
+      ],
+      "id": "89156dc0-2828-402f-8989-e408ed96e81a",
+      "name": "Embeddings OpenAI (Ingest)",
+      "credentials": {
+        "openAiApi": {
+          "id": "aVySjOJSUuOwC1Go",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -352,
+        -64
+      ],
+      "id": "16c93b43-11c6-469d-ad5a-273dc8c8f182",
+      "name": "Embeddings OpenAI (Query)",
+      "credentials": {
+        "openAiApi": {
+          "id": "aVySjOJSUuOwC1Go",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Document Ingestion Flow\nThis section handles the process of receiving documents from Google Drive, splitting them into chunks, and storing them as embeddings in Pinecone.",
+        "height": 640,
+        "width": 928
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1968,
+        -544
+      ],
+      "typeVersion": 1,
+      "id": "aff45e4f-d8b9-40a0-966d-a9bebb9ebba7",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Query and Retrieval Flow\nThis section is responsible for answering user queries using the AI Agent, which converts the query into embeddings and retrieves the most relevant documents.",
+        "height": 640,
+        "width": 928
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1008,
+        -544
+      ],
+      "typeVersion": 1,
+      "id": "5cd23de5-25b6-4380-9434-904f964be564",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## End-to-End RAG Pipeline\n### This note summarizes the entire Retrieval-Augmented Generation (RAG) system. The \"Document Ingestion Flow\" handles receiving documents from Google Drive and storing them as embeddings, while the \"Query and Retrieval Flow\" processes user queries and retrieves the most relevant results.",
+        "height": 800,
+        "width": 1968,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1984,
+        -656
+      ],
+      "typeVersion": 1,
+      "id": "7c40901c-bc04-4dc8-ad93-ac21fa57a300",
+      "name": "Sticky Note2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve documents": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI (Ingest)": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI (Query)": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Retrieve documents",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "d6a9a938-24c3-412b-89d0-a6ca4d81d820",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "fc158fdbaa992805f8f24f949180c48c02af381a855a894f0ab0cf2590d40025"
+  },
+  "id": "5YoJSlNNSJ-8MrxUqVkD2",
+  "tags": []
+}
